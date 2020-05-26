@@ -174,6 +174,19 @@ int main(void)
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  while(1)
+  {
+	  HAL_GPIO_TogglePin(GPIOI, GPIO_PIN_1);
+	  if ( HAL_GPIO_ReadPin(GPIOI, GPIO_PIN_11) )
+	  {
+		  HAL_Delay(500);
+	  }
+	  else
+	  {
+		  HAL_Delay(100);
+	  }
+  }
+
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
