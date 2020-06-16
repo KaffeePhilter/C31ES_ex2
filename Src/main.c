@@ -29,6 +29,7 @@
 #include "stm32746g_discovery_audio.h"
 #include "stm32746g_discovery_lcd.h"
 #include "lcd_log.h"
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -130,7 +131,6 @@ void StartDefaultTask(void const * argument);
 /* USER CODE BEGIN 0 */
 void BSP_AUDIO_IN_HalfTransfer_CallBack(void)
 {
-	BSP_LED_On(LED1);
 	AudioQueueItem item;
 	item.ptr = &audio_in_buffer[0];
 	item.len = AUDIO_IN_SAMPLES / 2;
@@ -143,7 +143,6 @@ void BSP_AUDIO_IN_HalfTransfer_CallBack(void)
 
 void BSP_AUDIO_IN_TransferComplete_CallBack(void)
 {
-	BSP_LED_Off(LED1);
 	AudioQueueItem item;
 	item.ptr = &audio_in_buffer[AUDIO_IN_SAMPLES / 2];
 	item.len = AUDIO_IN_SAMPLES / 2;
@@ -158,6 +157,38 @@ void BSP_AUDIO_IN_TransferComplete_CallBack(void)
 void BSP_AUDIO_IN_Error_CallBack(void)
 {
 	LCD_ErrLog("BSP_AUDIO_IN_Error_CallBack\n");
+}
+
+
+void audioProcessingTask( void* param )
+{
+	AudioQueueItem item;
+	for (;;)
+	{
+		if ( xQueueReceive( audioQueue, &item, pdMS_TO_TICKS(1000) ) == pdPASS)
+		{
+			BSP_LED_Toggle(LED1);
+
+			// value dBDF = 20 * log10(abs(value)/maxValue)
+
+			float sum = 0;
+
+			// sum of collected samples
+			for (size_t i = 0; i < item.len; i++)
+			{
+				sum += abs(item.ptr[i]);
+			}
+			sum /= item.len;
+
+			float max_signal = INT16_MAX;
+			float dBFS = 20 * log10f( sum / max_signal );
+
+			LCD_UsrLog("dBFS: %10d\n", (int)dBFS);
+
+		} else {
+			LCD_ErrLog("xQueueReceiveTimeOutError\n");
+		}
+	}
 }
 /* USER CODE END 0 */
 
@@ -260,6 +291,14 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+  xTaskCreate(
+		  &audioProcessingTask,
+		  "audioProcessing",
+		  1000,
+		  NULL,
+		  2,
+		  NULL
+		  );
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
