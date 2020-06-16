@@ -27,6 +27,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "stm32746g_discovery_audio.h"
+#include "stm32746g_discovery_lcd.h"
+#include "lcd_log.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -132,6 +134,8 @@ void BSP_AUDIO_IN_TransferComplete_CallBack(void)
 	BSP_LED_Off(LED1);
 }
 
+
+
 void BSP_AUDIO_IN_Error_CallBack(void)
 {
 	// TODO: add error handling
@@ -161,7 +165,8 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  DBGMCU->APB1FZ = 0x03E01FFF;
+  DBGMCU->APB2FZ = 0x00070003;
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -192,18 +197,27 @@ int main(void)
 
   BSP_LED_Init(LED1);
 
+  BSP_LCD_Init();
+  BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
+  BSP_LCD_Clear(LCD_COLOR_WHITE);
+
+  LCD_LOG_Init();
+  LCD_LOG_SetHeader((uint8_t *)"Audio2Text");
+  LCD_LOG_SetFooter((uint8_t *)"Computer Engineering - HTW Berlin");
+
+
   uint8_t ok;
 
   // 16 kHz sampling rate, 16 bit per sample, 2 channels
   ok = BSP_AUDIO_IN_Init( 16000, 16, 2);
   if (ok != AUDIO_OK) {
-
-	  // TODO: add error handling
+	  LCD_ErrLog("BSP_AUDIO_IN_Init failed\n");
 	  return -1;
   }
 
   ok = BSP_AUDIO_IN_Record( (uint16_t *)audio_in_buffer, AUDIO_IN_SAMPLES );
   if (ok != AUDIO_OK) {
+	  LCD_ErrLog("BSP_AUDIO_IN_Record failed\n");
 	  return -1;
   }
 
