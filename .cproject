@@ -48,9 +48,9 @@
 									<listOptionValue builtIn="false" value="../Middlewares/ST/STM32_USB_Host_Library/Class/CDC/Inc"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32F7xx/Include"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Aufgabenblatt1/Drivers/BSP/Components}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Aufgabenblatt1/Drivers/BSP/STM32746G-Discovery}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Aufgabenblatt1/Utilities/Log}&quot;"/>
+									<listOptionValue builtIn="false" value="../Utilities/Log"/>
+									<listOptionValue builtIn="false" value="../Drivers/BSP/STM32746G-Discovery"/>
+									<listOptionValue builtIn="false" value="../Drivers/BSP/Components"/>
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.2047095124" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))"/>
@@ -118,12 +118,6 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="fr.ac6.managedbuild.config.gnu.cross.exe.debug.1120116575.356759086" name="bsp_driver_sd.c" rcbsApplicability="disable" resourcePath="Src/bsp_driver_sd.c" toolsToInvoke="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.1452568357.1483606821">
-						<tool id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.1452568357.1483606821" name="MCU GCC Compiler" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.1452568357">
-							<inputType id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c.547144482" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c"/>
-							<inputType id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.s.1803428579" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.s"/>
-						</tool>
-					</fileInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Inc"/>

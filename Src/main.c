@@ -26,7 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stm32746g_discovery_audio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -83,6 +83,9 @@ SDRAM_HandleTypeDef hsdram1;
 
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
+#define AUDIO_IN_SAMPLES 16000
+
+int16_t audio_in_buffer[AUDIO_IN_SAMPLES];
 
 /* USER CODE END PV */
 
@@ -119,7 +122,20 @@ void StartDefaultTask(void const * argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void BSP_AUDIO_IN_HalfTransfer_CallBack(void)
+{
+	BSP_LED_On(LED1);
+}
 
+void BSP_AUDIO_IN_TransferComplete_CallBack(void)
+{
+	BSP_LED_Off(LED1);
+}
+
+void BSP_AUDIO_IN_Error_CallBack(void)
+{
+	// TODO: add error handling
+}
 /* USER CODE END 0 */
 
 /**
@@ -174,7 +190,27 @@ int main(void)
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
 
-   /* USER CODE END 2 */
+  BSP_LED_Init(LED1);
+
+  uint8_t ok;
+
+  // 16 kHz sampling rate, 16 bit per sample, 2 channels
+  ok = BSP_AUDIO_IN_Init( 16000, 16, 2);
+  if (ok != AUDIO_OK) {
+
+	  // TODO: add error handling
+	  return -1;
+  }
+
+  ok = BSP_AUDIO_IN_Record( (uint16_t *)audio_in_buffer, AUDIO_IN_SAMPLES );
+  if (ok != AUDIO_OK) {
+	  return -1;
+  }
+
+  while(1) {
+
+  }
+  /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */

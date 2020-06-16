@@ -24,6 +24,7 @@
 #include "cmsis_os.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stm32746g_discovery_audio.h"
 /* USER CODE END Includes */
   
 /* Private typedef -----------------------------------------------------------*/
@@ -219,6 +220,17 @@ void DMA2D_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+extern SAI_HandleTypeDef haudio_in_sai;
+/**
+ * @brief This function handles DMA2 Stream 7 interrupt request.
+ * @param None
+ * @retval None
+ */
+void AUDIO_IN_SAIx_DMAx_IRQHandler(void)
+{
+	HAL_DMA_IRQHandler(haudio_in_sai.hdmarx);
+}
+
 
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
