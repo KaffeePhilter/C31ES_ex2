@@ -33,7 +33,10 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+typedef struct AudioQueueItem {
+	int16_t *ptr;
+	size_t len;
+} AudioQueueItem;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -89,6 +92,7 @@ osThreadId defaultTaskHandle;
 
 int16_t audio_in_buffer[AUDIO_IN_SAMPLES];
 
+QueueHandle_t audioQueue;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -127,18 +131,33 @@ void StartDefaultTask(void const * argument);
 void BSP_AUDIO_IN_HalfTransfer_CallBack(void)
 {
 	BSP_LED_On(LED1);
+	AudioQueueItem item;
+	item.ptr = &audio_in_buffer[0];
+	item.len = AUDIO_IN_SAMPLES / 2;
+	if ( xQueueSendFromISR( audioQueue, &item, NULL ) != pdTRUE )
+	{
+		LCD_ErrLog("xQueueSendFromISR in BSP_AUDIO_IN_HalfTransfer_CallBack\n");
+	}
+
 }
 
 void BSP_AUDIO_IN_TransferComplete_CallBack(void)
 {
 	BSP_LED_Off(LED1);
+	AudioQueueItem item;
+	item.ptr = &audio_in_buffer[AUDIO_IN_SAMPLES / 2];
+	item.len = AUDIO_IN_SAMPLES / 2;
+	if ( xQueueSendFromISR( audioQueue, &item, NULL ) != pdTRUE )
+	{
+		LCD_ErrLog("xQueueSendFromISR in BSP_AUDIO_IN_TransferComplete_CallBack\n");
+	}
 }
 
 
 
 void BSP_AUDIO_IN_Error_CallBack(void)
 {
-	// TODO: add error handling
+	LCD_ErrLog("BSP_AUDIO_IN_Error_CallBack\n");
 }
 /* USER CODE END 0 */
 
@@ -215,15 +234,6 @@ int main(void)
 	  return -1;
   }
 
-  ok = BSP_AUDIO_IN_Record( (uint16_t *)audio_in_buffer, AUDIO_IN_SAMPLES );
-  if (ok != AUDIO_OK) {
-	  LCD_ErrLog("BSP_AUDIO_IN_Record failed\n");
-	  return -1;
-  }
-
-  while(1) {
-
-  }
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -240,6 +250,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  audioQueue = xQueueCreate( 1, sizeof(AudioQueueItem) );
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -1602,16 +1613,15 @@ void StartDefaultTask(void const * argument)
   MX_USB_HOST_Init();
 
   /* USER CODE BEGIN 5 */
+  uint8_t ok = BSP_AUDIO_IN_Record((uint16_t *) audio_in_buffer,
+		  AUDIO_IN_SAMPLES);
+  if (ok != AUDIO_OK) {
+	  LCD_ErrLog("BSP_AUDIO_IN_Record failed\n");
+  }
+
   /* Infinite loop */
   for (;;) {
-
-	  HAL_GPIO_TogglePin(GPIOI, GPIO_PIN_1);
-	  if (HAL_GPIO_ReadPin(GPIOI, GPIO_PIN_11)) {
-		  osDelay(500);
-	  } else {
-		  osDelay(100);
-	  }
-
+	  osDelay(1000);
   }
   /* USER CODE END 5 */ 
 }
