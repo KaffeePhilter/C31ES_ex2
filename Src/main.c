@@ -187,11 +187,11 @@ void audioProcessingTask( void* param )
 	AudioQueueItem item;
 
 	// watchdog init
-
+	  __HAL_DBGMCU_FREEZE_IWDG(); // freeze watchdog when debugging
 	  hiwdg.Instance = IWDG;
-	  hiwdg.Init.Prescaler = IWDG_PRESCALER_8;
+	  hiwdg.Init.Prescaler = IWDG_PRESCALER_8; // 32khz : 8 = 4 KHZ
 	  hiwdg.Init.Window = 255;
-	  hiwdg.Init.Reload = 255;
+	  hiwdg.Init.Reload = 100; // 4 KHZ : 100 = 40 HZ -> 0.025s
 
 	  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
 	  {
