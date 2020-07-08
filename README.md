@@ -1,5 +1,5 @@
 # Task [1..6]
-> [Short descritption what this software does.]
+> Display audio amplitude graph and bubbles to the touch.
 
 ## Group
 - Philipp Horlaender
