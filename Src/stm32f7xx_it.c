@@ -236,7 +236,7 @@ void AUDIO_IN_SAIx_DMAx_IRQHandler(void)
 void EXTI15_10_IRQHandler(void)
 {
 
-    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
+    HAL_GPIO_EXTI_IRQHandler(TS_INT_PIN);
 
 }
 

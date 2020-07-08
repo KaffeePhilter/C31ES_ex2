@@ -164,11 +164,18 @@ void BSP_AUDIO_IN_Error_CallBack(void)
 	send_UART("BSP_AUDIO_IN_Error_CallBack\n");
 }
 
+/**
+ * @brief EXTI line detection callbacks
+ * @param GPIO_Pin: Specifies the pins connected EXTI line
+ * @retval None
+ */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-
-	BSP_LED_Toggle(LED1);
-
+	TS_StateTypeDef TS_state;
+	if(GPIO_Pin == TS_INT_PIN)
+	{
+		BSP_LED_Toggle(LED1);
+	}
 }
 
 
@@ -183,10 +190,10 @@ void audioProcessingTask( void* param )
 
 	  hiwdg.Instance = IWDG;
 	  hiwdg.Init.Prescaler = IWDG_PRESCALER_8;
-	  hiwdg.Init.Window = 4095;
-	  hiwdg.Init.Reload = 4095;
-	  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+	  hiwdg.Init.Window = 255;
+	  hiwdg.Init.Reload = 255;
 
+	  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
 	  {
 	    Error_Handler();
 	  }
@@ -229,7 +236,7 @@ void audioProcessingTask( void* param )
 
 			int ysize = BSP_LCD_GetYSize();
 
-			db_to_VLine = BSP_LCD_GetYSize() / 2 + 1.5 * dBFS;
+			db_to_VLine = BSP_LCD_GetYSize() / 2 + 1.8 * dBFS;
 
 			xSemaphoreTake(Mutex, portMAX_DELAY);
 
