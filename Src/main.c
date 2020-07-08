@@ -92,6 +92,7 @@ SDRAM_HandleTypeDef hsdram1;
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
 #define AUDIO_IN_SAMPLES 1600
+SemaphoreHandle_t Mutex;
 
 int16_t audio_in_buffer[AUDIO_IN_SAMPLES];
 
@@ -161,6 +162,14 @@ void BSP_AUDIO_IN_Error_CallBack(void)
 	send_UART("BSP_AUDIO_IN_Error_CallBack\n");
 }
 
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if (GPIO_Pin == TS_INT_PIN)
+	{
+		BSP_LED_Toggle(LED1);
+	}
+}
+
 
 void audioProcessingTask( void* param )
 {
@@ -173,7 +182,7 @@ void audioProcessingTask( void* param )
 	{
 		if ( xQueueReceive( audioQueue, &item, pdMS_TO_TICKS(1000) ) == pdPASS)
 		{
-			BSP_LED_Toggle(LED1);
+			//BSP_LED_Toggle(LED1);
 
 			// value dBDF = 20 * log10(abs(value)/maxValue)
 
@@ -195,7 +204,6 @@ void audioProcessingTask( void* param )
 
 			// LCD display
 
-			BSP_LCD_SetTextColor(LCD_COLOR_YELLOW);
 
 			if (x_pos > BSP_LCD_GetXSize())
 			{
@@ -207,8 +215,13 @@ void audioProcessingTask( void* param )
 
 			db_to_VLine = BSP_LCD_GetYSize() / 2 + 1.5 * dBFS;
 
+			xSemaphoreTake(Mutex, portMAX_DELAY);
+
+			BSP_LCD_SetTextColor(LCD_COLOR_YELLOW);
 			BSP_LCD_DrawVLine(x_pos++, ysize / 2, db_to_VLine);
 			BSP_LCD_DrawVLine(x_pos, ysize / 2 - db_to_VLine, db_to_VLine);
+
+			xSemaphoreGive(Mutex);
 
 		} else {
 			send_UART("xQueueReceiveTimeOutError\n");
@@ -229,15 +242,17 @@ void touchTask(void *param)
 
 	       if( state.touchDetected > 0 && state.touchWeight[0] > 0 )
 	       {
+	    	   	   xSemaphoreTake(Mutex, portMAX_DELAY);
 
 	               BSP_LCD_SetTextColor( LCD_COLOR_ORANGE );
 
 	               BSP_LCD_FillCircle( state.touchX[0], state.touchY[0], state.touchWeight[0] );
-
+	               xSemaphoreGive(Mutex);
 	       }
 
 	}
 }
+
 /* USER CODE END 0 */
 
 /**
@@ -247,7 +262,7 @@ void touchTask(void *param)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  Mutex = xSemaphoreCreateMutex();
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -1521,6 +1536,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LCD_BL_CTRL_GPIO_Port, LCD_BL_CTRL_Pin, GPIO_PIN_SET);
+
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LCD_DISP_GPIO_Port, LCD_DISP_Pin, GPIO_PIN_SET);
