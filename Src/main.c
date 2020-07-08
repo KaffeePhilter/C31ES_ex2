@@ -28,6 +28,7 @@
 /* USER CODE BEGIN Includes */
 #include "stm32746g_discovery_audio.h"
 #include "stm32746g_discovery_lcd.h"
+#include "stm32746g_discovery_ts.h"
 #include "lcd_log.h"
 #include <math.h>
 /* USER CODE END Includes */
@@ -214,6 +215,29 @@ void audioProcessingTask( void* param )
 		}
 	}
 }
+
+void touchTask(void *param)
+{
+	BSP_TS_Init( BSP_LCD_GetXSize(), BSP_LCD_GetYSize() );
+
+	for(;;)
+	{
+
+	       TS_StateTypeDef state;
+
+	       BSP_TS_GetState( &state );
+
+	       if( state.touchDetected > 0 && state.touchWeight[0] > 0 )
+	       {
+
+	               BSP_LCD_SetTextColor( LCD_COLOR_ORANGE );
+
+	               BSP_LCD_FillCircle( state.touchX[0], state.touchY[0], state.touchWeight[0] );
+
+	       }
+
+	}
+}
 /* USER CODE END 0 */
 
 /**
@@ -316,13 +340,21 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   xTaskCreate(
-		  &audioProcessingTask,
-		  "audioProcessing",
-		  1000,
-		  NULL,
-		  2,
-		  NULL
-		  );
+  		  &audioProcessingTask,
+  		  "audioProcessing",
+  		  1000,
+  		  NULL,
+  		  2,
+  		  NULL
+  		  );
+  xTaskCreate(
+  		  &touchTask,
+  		  "touchScreenProcessing",
+  		  1000,
+  		  NULL,
+  		  2,
+  		  NULL
+  		  );
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
