@@ -90,7 +90,7 @@ SDRAM_HandleTypeDef hsdram1;
 
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
-#define AUDIO_IN_SAMPLES 16000
+#define AUDIO_IN_SAMPLES 1600
 
 int16_t audio_in_buffer[AUDIO_IN_SAMPLES];
 
@@ -163,7 +163,11 @@ void BSP_AUDIO_IN_Error_CallBack(void)
 
 void audioProcessingTask( void* param )
 {
+	int x_pos = 0;
+	int db_to_VLine;
 	AudioQueueItem item;
+
+
 	for (;;)
 	{
 		if ( xQueueReceive( audioQueue, &item, pdMS_TO_TICKS(1000) ) == pdPASS)
@@ -184,9 +188,26 @@ void audioProcessingTask( void* param )
 			float max_signal = INT16_MAX;
 			float dBFS = 20 * log10f( sum / max_signal );
 
-			char s[64];
+			char s[18];
 			sprintf(s,"dBFS: %10d\n", (int)dBFS);
 			send_UART(s);
+
+			// LCD display
+
+			BSP_LCD_SetTextColor(LCD_COLOR_YELLOW);
+
+			if (x_pos > BSP_LCD_GetXSize())
+			{
+				BSP_LCD_Clear(LCD_COLOR_WHITE);
+				x_pos = 0;
+			}
+
+			int ysize = BSP_LCD_GetYSize();
+
+			db_to_VLine = BSP_LCD_GetYSize() / 2 + 1.5 * dBFS;
+
+			BSP_LCD_DrawVLine(x_pos++, ysize / 2, db_to_VLine);
+			BSP_LCD_DrawVLine(x_pos, ysize / 2 - db_to_VLine, db_to_VLine);
 
 		} else {
 			send_UART("xQueueReceiveTimeOutError\n");
@@ -254,9 +275,9 @@ int main(void)
   BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
   BSP_LCD_Clear(LCD_COLOR_WHITE);
 
-  LCD_LOG_Init();
-  LCD_LOG_SetHeader((uint8_t *)"Audio2Text");
-  LCD_LOG_SetFooter((uint8_t *)"Computer Engineering - HTW Berlin");
+  //LCD_LOG_Init();
+  //LCD_LOG_SetHeader((uint8_t *)"Audio2Text");
+  //LCD_LOG_SetFooter((uint8_t *)"Computer Engineering - HTW Berlin");
 
 
   uint8_t ok;
