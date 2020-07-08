@@ -23,10 +23,11 @@
 /*-----------------------------------------------------------------------------/
 / Additional user header to be used  
 /-----------------------------------------------------------------------------*/
+
 #include "main.h"
 #include "stm32f7xx_hal.h"
-#include "cmsis_os.h"    /* _FS_REENTRANT set to 1 */
 #include "bsp_driver_sd.h"
+#include "cmsis_os.h" /* _FS_REENTRANT set to 1 and CMSIS API chosen */
 
 /*-----------------------------------------------------------------------------/
 / Function Configurations
@@ -260,11 +261,10 @@
 /  SemaphoreHandle_t and etc.. A header file for O/S definitions needs to be
 /  included somewhere in the scope of ff.h. */
 
-/* define the ff_malloc ff_free macros as standard malloc free */
+/* define the ff_malloc ff_free macros as FreeRTOS pvPortMalloc and vPortFree macros */
 #if !defined(ff_malloc) && !defined(ff_free)
-#include <stdlib.h>
-#define ff_malloc  malloc
-#define ff_free  free
+#define ff_malloc  pvPortMalloc
+#define ff_free  vPortFree
 #endif
 
 #endif /* _FFCONF */

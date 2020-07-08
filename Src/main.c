@@ -64,6 +64,8 @@ DMA2D_HandleTypeDef hdma2d;
 I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c3;
 
+IWDG_HandleTypeDef hiwdg;
+
 LTDC_HandleTypeDef hltdc;
 
 QSPI_HandleTypeDef hqspi;
@@ -107,9 +109,9 @@ static void MX_CRC_Init(void);
 static void MX_DCMI_Init(void);
 static void MX_DMA2D_Init(void);
 static void MX_FMC_Init(void);
-static void MX_GFXSIMULATOR_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_I2C3_Init(void);
+static void MX_IWDG_Init(void);
 static void MX_LTDC_Init(void);
 static void MX_QUADSPI_Init(void);
 static void MX_RTC_Init(void);
@@ -164,11 +166,11 @@ void BSP_AUDIO_IN_Error_CallBack(void)
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	if (GPIO_Pin == TS_INT_PIN)
-	{
-		BSP_LED_Toggle(LED1);
-	}
+
+	BSP_LED_Toggle(LED1);
+
 }
+
 
 
 void audioProcessingTask( void* param )
@@ -177,14 +179,28 @@ void audioProcessingTask( void* param )
 	int db_to_VLine;
 	AudioQueueItem item;
 
+	// watchdog init
+
+	  hiwdg.Instance = IWDG;
+	  hiwdg.Init.Prescaler = IWDG_PRESCALER_8;
+	  hiwdg.Init.Window = 4095;
+	  hiwdg.Init.Reload = 4095;
+	  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+
+	  {
+	    Error_Handler();
+	  }
+
 
 	for (;;)
 	{
+
 		if ( xQueueReceive( audioQueue, &item, pdMS_TO_TICKS(1000) ) == pdPASS)
 		{
 			//BSP_LED_Toggle(LED1);
 
 			// value dBDF = 20 * log10(abs(value)/maxValue)
+			HAL_IWDG_Refresh(&hiwdg);
 
 			float sum = 0;
 
@@ -243,9 +259,7 @@ void touchTask(void *param)
 	       if( state.touchDetected > 0 && state.touchWeight[0] > 0 )
 	       {
 	    	   	   xSemaphoreTake(Mutex, portMAX_DELAY);
-
 	               BSP_LCD_SetTextColor( LCD_COLOR_ORANGE );
-
 	               BSP_LCD_FillCircle( state.touchX[0], state.touchY[0], state.touchWeight[0] );
 	               xSemaphoreGive(Mutex);
 	       }
@@ -289,9 +303,9 @@ int main(void)
   MX_DCMI_Init();
   MX_DMA2D_Init();
   MX_FMC_Init();
-  MX_GFXSIMULATOR_Init();
   MX_I2C1_Init();
   MX_I2C3_Init();
+  MX_IWDG_Init();
   MX_LTDC_Init();
   MX_QUADSPI_Init();
   MX_RTC_Init();
@@ -306,6 +320,7 @@ int main(void)
   MX_TIM12_Init();
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
+  MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
   BSP_LED_Init(LED1);
@@ -374,9 +389,8 @@ int main(void)
 
   /* Start scheduler */
   osKernelStart();
-  
+ 
   /* We should never get here as control is now taken by the scheduler */
-
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -491,7 +505,7 @@ static void MX_ADC3_Init(void)
   hadc3.Instance = ADC3;
   hadc3.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc3.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc3.Init.ScanConvMode = DISABLE;
+  hadc3.Init.ScanConvMode = ADC_SCAN_DISABLE;
   hadc3.Init.ContinuousConvMode = DISABLE;
   hadc3.Init.DiscontinuousConvMode = DISABLE;
   hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
@@ -625,27 +639,6 @@ static void MX_DMA2D_Init(void)
 }
 
 /**
-  * @brief GFXSIMULATOR Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_GFXSIMULATOR_Init(void)
-{
-
-  /* USER CODE BEGIN GFXSIMULATOR_Init 0 */
-
-  /* USER CODE END GFXSIMULATOR_Init 0 */
-
-  /* USER CODE BEGIN GFXSIMULATOR_Init 1 */
-
-  /* USER CODE END GFXSIMULATOR_Init 1 */
-  /* USER CODE BEGIN GFXSIMULATOR_Init 2 */
-
-  /* USER CODE END GFXSIMULATOR_Init 2 */
-
-}
-
-/**
   * @brief I2C1 Initialization Function
   * @param None
   * @retval None
@@ -734,6 +727,30 @@ static void MX_I2C3_Init(void)
   /* USER CODE BEGIN I2C3_Init 2 */
 
   /* USER CODE END I2C3_Init 2 */
+
+}
+
+/**
+  * @brief IWDG Initialization Function
+  * @param None
+  * @retval None
+  */
+
+static void MX_IWDG_Init(void)
+{
+
+  /* USER CODE BEGIN IWDG_Init 0 */
+
+  /* USER CODE END IWDG_Init 0 */
+
+  /* USER CODE BEGIN IWDG_Init 1 */
+
+  /* USER CODE END IWDG_Init 1 */
+
+
+  /* USER CODE BEGIN IWDG_Init 2 */
+
+  /* USER CODE END IWDG_Init 2 */
 
 }
 
@@ -886,7 +903,6 @@ static void MX_RTC_Init(void)
   sDate.Month = RTC_MONTH_JANUARY;
   sDate.Date = 0x1;
   sDate.Year = 0x0;
-
   if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK)
   {
     Error_Handler();
@@ -1474,7 +1490,16 @@ static void MX_USART6_UART_Init(void)
 /* FMC initialization function */
 static void MX_FMC_Init(void)
 {
-  FMC_SDRAM_TimingTypeDef SdramTiming;
+
+  /* USER CODE BEGIN FMC_Init 0 */
+
+  /* USER CODE END FMC_Init 0 */
+
+  FMC_SDRAM_TimingTypeDef SdramTiming = {0};
+
+  /* USER CODE BEGIN FMC_Init 1 */
+
+  /* USER CODE END FMC_Init 1 */
 
   /** Perform the SDRAM1 memory initialization sequence
   */
@@ -1504,6 +1529,9 @@ static void MX_FMC_Init(void)
     Error_Handler( );
   }
 
+  /* USER CODE BEGIN FMC_Init 2 */
+
+  /* USER CODE END FMC_Init 2 */
 }
 
 /**
@@ -1536,7 +1564,6 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LCD_BL_CTRL_GPIO_Port, LCD_BL_CTRL_Pin, GPIO_PIN_SET);
-
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LCD_DISP_GPIO_Port, LCD_DISP_Pin, GPIO_PIN_SET);
@@ -1717,12 +1744,8 @@ static void MX_GPIO_Init(void)
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument)
 {
-  /* init code for FATFS */
-  MX_FATFS_Init();
-
   /* init code for USB_HOST */
   MX_USB_HOST_Init();
-
   /* USER CODE BEGIN 5 */
   uint8_t ok = BSP_AUDIO_IN_Record((uint16_t *) audio_in_buffer,
 		  AUDIO_IN_SAMPLES);
@@ -1737,7 +1760,7 @@ void StartDefaultTask(void const * argument)
   /* USER CODE END 5 */ 
 }
 
-/**
+ /**
   * @brief  Period elapsed callback in non blocking mode
   * @note   This function is called  when TIM6 interrupt took place, inside
   * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment

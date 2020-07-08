@@ -21,10 +21,12 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f7xx_it.h"
-#include "cmsis_os.h"
+#include "FreeRTOS.h"
+#include "task.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "stm32746g_discovery_audio.h"
+#include "stm32f7xx_hal_gpio.h"
 /* USER CODE END Includes */
   
 /* Private typedef -----------------------------------------------------------*/
@@ -229,6 +231,13 @@ extern SAI_HandleTypeDef haudio_in_sai;
 void AUDIO_IN_SAIx_DMAx_IRQHandler(void)
 {
 	HAL_DMA_IRQHandler(haudio_in_sai.hdmarx);
+}
+
+void EXTI15_10_IRQHandler(void)
+{
+
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
+
 }
 
 
