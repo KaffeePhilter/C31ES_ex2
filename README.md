@@ -9,7 +9,7 @@
 ## System Requirements
 
 # Hardware
-
+STM32-XXX-Discovery Board
 
 ## Build and Run
 Open .cproject file in AC6 and build as ac6. 
