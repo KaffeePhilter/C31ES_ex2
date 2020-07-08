@@ -162,7 +162,7 @@ void BSP_AUDIO_IN_Error_CallBack(void)
 	send_UART("BSP_AUDIO_IN_Error_CallBack\n");
 }
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+void HAL_GPIO_EXTI_CallBack(uint16_t GPIO_Pin)
 {
 	if (GPIO_Pin == TS_INT_PIN)
 	{
