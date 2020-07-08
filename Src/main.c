@@ -42,6 +42,7 @@ typedef struct AudioQueueItem {
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define send_UART(str) HAL_UART_Transmit(&huart1, str, sizeof(str), 1000)
 
 /* USER CODE END PD */
 
@@ -136,7 +137,7 @@ void BSP_AUDIO_IN_HalfTransfer_CallBack(void)
 	item.len = AUDIO_IN_SAMPLES / 2;
 	if ( xQueueSendFromISR( audioQueue, &item, NULL ) != pdTRUE )
 	{
-		LCD_ErrLog("xQueueSendFromISR in BSP_AUDIO_IN_HalfTransfer_CallBack\n");
+		send_UART("xQueueSendFromISR in BSP_AUDIO_IN_HalfTransfer_CallBack\n");
 	}
 
 }
@@ -148,7 +149,7 @@ void BSP_AUDIO_IN_TransferComplete_CallBack(void)
 	item.len = AUDIO_IN_SAMPLES / 2;
 	if ( xQueueSendFromISR( audioQueue, &item, NULL ) != pdTRUE )
 	{
-		LCD_ErrLog("xQueueSendFromISR in BSP_AUDIO_IN_TransferComplete_CallBack\n");
+		send_UART("xQueueSendFromISR in BSP_AUDIO_IN_TransferComplete_CallBack\n");
 	}
 }
 
@@ -156,7 +157,7 @@ void BSP_AUDIO_IN_TransferComplete_CallBack(void)
 
 void BSP_AUDIO_IN_Error_CallBack(void)
 {
-	LCD_ErrLog("BSP_AUDIO_IN_Error_CallBack\n");
+	send_UART("BSP_AUDIO_IN_Error_CallBack\n");
 }
 
 
@@ -183,10 +184,12 @@ void audioProcessingTask( void* param )
 			float max_signal = INT16_MAX;
 			float dBFS = 20 * log10f( sum / max_signal );
 
-			LCD_UsrLog("dBFS: %10d\n", (int)dBFS);
+			char s[64];
+			sprintf(s,"dBFS: %10d\n", (int)dBFS);
+			send_UART(s);
 
 		} else {
-			LCD_ErrLog("xQueueReceiveTimeOutError\n");
+			send_UART("xQueueReceiveTimeOutError\n");
 		}
 	}
 }
@@ -261,7 +264,7 @@ int main(void)
   // 16 kHz sampling rate, 16 bit per sample, 2 channels
   ok = BSP_AUDIO_IN_Init( 16000, 16, 2);
   if (ok != AUDIO_OK) {
-	  LCD_ErrLog("BSP_AUDIO_IN_Init failed\n");
+	  send_UART("BSP_AUDIO_IN_Init failed\n");
 	  return -1;
   }
 
@@ -1655,7 +1658,7 @@ void StartDefaultTask(void const * argument)
   uint8_t ok = BSP_AUDIO_IN_Record((uint16_t *) audio_in_buffer,
 		  AUDIO_IN_SAMPLES);
   if (ok != AUDIO_OK) {
-	  LCD_ErrLog("BSP_AUDIO_IN_Record failed\n");
+	  send_UART("BSP_AUDIO_IN_Record failed\n");
   }
 
   /* Infinite loop */
