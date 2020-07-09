@@ -39,6 +39,11 @@ typedef struct AudioQueueItem {
 	int16_t *ptr;
 	size_t len;
 } AudioQueueItem;
+
+typedef struct TouchQueueItem {
+	TS_StateTypeDef *ptr;
+	size_t len;
+} TouchQueueItem;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -99,6 +104,7 @@ SemaphoreHandle_t Mutex;
 int16_t audio_in_buffer[AUDIO_IN_SAMPLES];
 
 QueueHandle_t audioQueue;
+QueueHandle_t touchQueue;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -172,9 +178,16 @@ void BSP_AUDIO_IN_Error_CallBack(void)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	TS_StateTypeDef TS_state;
+	TouchQueueItem item;
 	if(GPIO_Pin == TS_INT_PIN)
 	{
-		BSP_LED_Toggle(LED1);
+		BSP_TS_GetState(&TS_state);
+		item.ptr = &TS_state;
+		item.len = sizeof(TS_state);
+		if ( xQueueSendFromISR( touchQueue, &item, NULL) != pdTRUE )
+		{
+			send_UART("xQueueSendFromISR in HAL_GPIO_EXTI_CallBack\n");
+		}
 	}
 }
 
@@ -189,9 +202,9 @@ void audioProcessingTask( void* param )
 	// watchdog init
 	  __HAL_DBGMCU_FREEZE_IWDG(); // freeze watchdog when debugging
 	  hiwdg.Instance = IWDG;
-	  hiwdg.Init.Prescaler = IWDG_PRESCALER_8; // 32khz : 8 = 4 KHZ
+	  hiwdg.Init.Prescaler = IWDG_PRESCALER_4; // 32khz : 8 = 4 KHZ
 	  hiwdg.Init.Window = 255;
-	  hiwdg.Init.Reload = 100; // 4 KHZ : 100 = 40 HZ -> 0.025s
+	  hiwdg.Init.Reload = 200; // 4 KHZ : 100 = 40 HZ -> 0.025s
 
 	  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
 	  {
@@ -255,16 +268,18 @@ void audioProcessingTask( void* param )
 void touchTask(void *param)
 {
 	BSP_TS_Init( BSP_LCD_GetXSize(), BSP_LCD_GetYSize() );
+	BSP_TS_ITConfig();
+
+	TS_StateTypeDef state;
+    TouchQueueItem item;
 
 	for(;;)
 	{
 
-	       TS_StateTypeDef state;
 
-	       BSP_TS_GetState( &state );
-
-	       if( state.touchDetected > 0 && state.touchWeight[0] > 0 )
+	       if ( xQueueReceive( touchQueue, &item, pdMS_TO_TICKS(1000) ) == pdPASS)
 	       {
+	    	   	   state = *item.ptr;
 	    	   	   xSemaphoreTake(Mutex, portMAX_DELAY);
 	               BSP_LCD_SetTextColor( LCD_COLOR_ORANGE );
 	               BSP_LCD_FillCircle( state.touchX[0], state.touchY[0], state.touchWeight[0] );
@@ -292,8 +307,9 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
   /* USER CODE END Init */
+
+
 
   /* Configure the system clock */
   SystemClock_Config();
