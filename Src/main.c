@@ -39,6 +39,9 @@ typedef struct AudioQueueItem {
 	int16_t *ptr;
 	size_t len;
 } AudioQueueItem;
+
+
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -176,9 +179,10 @@ void BSP_AUDIO_IN_Error_CallBack(void)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	TS_StateTypeDef TS_state;
-	BSP_TS_GetState( &TS_state );
+
 	if(GPIO_Pin == TS_INT_PIN)
 	{
+		BSP_TS_GetState( &TS_state );
 		if ( xQueueSendFromISR( touchdisplayQueue, &TS_state, NULL ) != pdTRUE )
 			{
 				send_UART("xQueueSendFromISR HAL_GPIO_EXTI_Callback\n");
@@ -199,8 +203,8 @@ void audioProcessingTask( void* param )
 	  __HAL_DBGMCU_FREEZE_IWDG(); // freeze watchdog when debugging
 	  hiwdg.Instance = IWDG;
 	  hiwdg.Init.Prescaler = IWDG_PRESCALER_8; // 32khz : 8 = 4 KHZ
-	  hiwdg.Init.Window = 1000;
-	  hiwdg.Init.Reload = 1000; // 4 KHZ : 100 = 40 HZ -> 0.025s
+	  hiwdg.Init.Window = 255;
+	  hiwdg.Init.Reload = 100; // 4 KHZ : 100 = 40 HZ -> 0.025s
 
 	  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
 	  {
@@ -273,10 +277,15 @@ void touchTask(void *param)
 
 	       if( xQueueReceive( touchdisplayQueue, &TS_state, pdMS_TO_TICKS(1000) ) == pdPASS )
 	       {
+	    	   if( TS_state.touchDetected > 0 && TS_state.touchWeight[0] > 0 )
+	    	   {
 	    	   	   xSemaphoreTake(Mutex, portMAX_DELAY);
 	               BSP_LCD_SetTextColor( LCD_COLOR_ORANGE );
 	               BSP_LCD_FillCircle( TS_state.touchX[0], TS_state.touchY[0], TS_state.touchWeight[0] );
 	               xSemaphoreGive(Mutex);
+	    	   }
+
+	    	  // BSP_LED_Toggle(LED1);
 
 	       }
 
