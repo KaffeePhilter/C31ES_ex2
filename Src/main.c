@@ -244,6 +244,7 @@ void audioProcessingTask( void* param )
 			if (x_pos > BSP_LCD_GetXSize())
 			{
 				BSP_LCD_Clear(LCD_COLOR_WHITE);
+				Display_LCD_Button();
 				x_pos = 0;
 			}
 
@@ -270,31 +271,76 @@ void touchTask(void *param)
 	BSP_TS_Init( BSP_LCD_GetXSize(), BSP_LCD_GetYSize() );
 	BSP_TS_ITConfig();
 	TS_StateTypeDef TS_state;
+	Display_LCD_Button();
+	int x,y,status =0;
 
 	for(;;)
 	{
 
 
-	       if( xQueueReceive( touchdisplayQueue, &TS_state, pdMS_TO_TICKS(1000) ) == pdPASS )
-	       {
-	    	   if( TS_state.touchDetected > 0 && TS_state.touchWeight[0] > 0 )
-	    	   {
-	    	   	   xSemaphoreTake(Mutex, portMAX_DELAY);
-	               BSP_LCD_SetTextColor( LCD_COLOR_ORANGE );
-	               BSP_LCD_FillCircle( TS_state.touchX[0], TS_state.touchY[0], TS_state.touchWeight[0] );
-	               xSemaphoreGive(Mutex);
-	    	   }
+		if (status==1 && !TS_state.touchDetected)
+		{
+			HAL_IWDG_Refresh(&hiwdg);
+			BSP_AUDIO_IN_Resume();
+			status = 0;
 
+		}
+
+	    if( xQueueReceive( touchdisplayQueue, &TS_state, pdMS_TO_TICKS(1000) ) == pdPASS )
+	    {
+	    	if( TS_state.touchDetected > 0 && TS_state.touchWeight[0] > 0 )
+	    	   {
+					  x = TS_state.touchX[0];
+					  y = TS_state.touchY[0];
+
+					  if (x > 0 && x<80 && y>(272-80) && y< 272)
+					  {
+						  BSP_AUDIO_IN_Pause();
+						  HAL_IWDG_Refresh(&hiwdg);
+						  status = 1;
+					  }
+					  else
+					  {
+
+						  xSemaphoreTake(Mutex, portMAX_DELAY);
+						  BSP_LCD_SetTextColor( LCD_COLOR_ORANGE );
+						  BSP_LCD_FillCircle( TS_state.touchX[0], TS_state.touchY[0], TS_state.touchWeight[0] );
+						  xSemaphoreGive(Mutex);
+					  }
+
+
+
+	    	   }
 	    	  // BSP_LED_Toggle(LED1);
+
 
 	       }
 
 	       else
 	       {
-	       			send_UART("xQueueReceiveTimeOutError\n");
+	       		send_UART("xQueueReceiveTimeOutError\n");
 	       }
 
 	}
+}
+
+void Display_LCD_Button(void)
+{
+
+	int x = 40;
+    int y = 232;
+    int rad = 40;
+    BSP_LCD_DrawCircle(x, y, rad);
+    BSP_LCD_FillCircle(x, y, rad);
+
+    BSP_LCD_SetFont(&Font16);
+    //480x272 resolution
+    xSemaphoreTake(Mutex, portMAX_DELAY);
+    BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
+    BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
+    xSemaphoreGive(Mutex);
+    BSP_LCD_DisplayStringAt(20,225, (uint8_t *)"STOP", LEFT_MODE);
+
 }
 
 /* USER CODE END 0 */
